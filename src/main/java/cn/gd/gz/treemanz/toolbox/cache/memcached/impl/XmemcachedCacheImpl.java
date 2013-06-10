@@ -1,9 +1,3 @@
-/**
- * @(#)XmemcachedCacheImpl.java, 2012-3-12. Copyright 2012 Netease, Inc. All
- *                               rights reserved. NETEASE
- *                               PROPRIETARY/CONFIDENTIAL. Use is subject to
- *                               license terms.
- */
 package cn.gd.gz.treemanz.toolbox.cache.memcached.impl;
 
 import java.security.InvalidParameterException;

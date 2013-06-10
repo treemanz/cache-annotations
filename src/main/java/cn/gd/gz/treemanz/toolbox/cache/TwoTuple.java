@@ -1,8 +1,3 @@
-/**
- * @(#)TwoTuple.java, 2011-4-1. Copyright 2011 Netease, Inc. All rights
- *                    reserved. NETEASE PROPRIETARY/CONFIDENTIAL. Use is subject
- *                    to license terms.
- */
 package cn.gd.gz.treemanz.toolbox.cache;
 
 /**
