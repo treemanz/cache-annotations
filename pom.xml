@@ -4,7 +4,7 @@
 
 	<groupId>cn.gd.gz.treemanz.toolbox</groupId>
 	<artifactId>cache-annotations</artifactId>
-	<version>1.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>cache-annotations</name>

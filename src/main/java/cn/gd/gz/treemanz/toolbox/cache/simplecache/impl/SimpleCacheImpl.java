@@ -13,8 +13,7 @@ import cn.gd.gz.treemanz.toolbox.cache.simplecache.SimpleCache;
 
 public class SimpleCacheImpl implements SimpleCache {
 
-    private static final Logger logger = Logger
-            .getLogger(SimpleCacheImpl.class);
+    private static final Logger logger = Logger.getLogger(SimpleCacheImpl.class);
 
     /**
      * 具体内容存放的地方
@@ -63,8 +62,8 @@ public class SimpleCacheImpl implements SimpleCache {
 
         scheduleService = Executors.newScheduledThreadPool(1);
 
-        scheduleService.scheduleAtFixedRate(new CheckExpiredJob(caches,
-                expiryCache), 0, expiryInterval * 60, TimeUnit.SECONDS);
+        scheduleService.scheduleAtFixedRate(new CheckExpiredJob(caches, expiryCache), 0, expiryInterval * 60,
+                TimeUnit.SECONDS);
 
         if (logger.isInfoEnabled()) {
             logger.info("DefaultCache CheckService is start!");
@@ -85,8 +84,7 @@ public class SimpleCacheImpl implements SimpleCache {
 
     private void checkExpire(String key) {
         Long expiry = expiryCache.get(key);
-        if (expiry != null && expiry != -1
-                && new Date(expiry).before(new Date())) {
+        if (expiry != null && expiry != -1 && new Date(expiry).before(new Date())) {
             getCache(key).remove(key);
             expiryCache.remove(key);
         } else if (expiry != null && expiry != -1) {
@@ -98,8 +96,7 @@ public class SimpleCacheImpl implements SimpleCache {
         Object o = getCache(key).remove(key);
         if (null != o) {
             Long l = expiryCache.remove(key);
-            logger.debug("delete key : " + key + " - value : " + o.toString()
-                    + " - expiry : " + l + " | current : "
+            logger.debug("delete key : " + key + " - value : " + o.toString() + " - expiry : " + l + " | current : "
                     + System.currentTimeMillis());
         }
         return true;
@@ -113,7 +110,7 @@ public class SimpleCacheImpl implements SimpleCache {
     public void set(String key, Object value, long ttl) {
         getCache(key).put(key, value);
 
-        if (ttl == -1) {
+        if (ttl == -1 || ttl == 0) {
             expiryCache.put(key, -1L);
         } else {
             expiryCache.put(key, System.currentTimeMillis() + ttl * 1000); // 去掉Calendar的实现
@@ -135,8 +132,7 @@ public class SimpleCacheImpl implements SimpleCache {
          */
         ConcurrentHashMap<String, Long> expiryCache;
 
-        public CheckExpiredJob(ConcurrentHashMap<String, Object>[] caches,
-                ConcurrentHashMap<String, Long> expiryCache) {
+        public CheckExpiredJob(ConcurrentHashMap<String, Object>[] caches, ConcurrentHashMap<String, Long> expiryCache) {
             this.caches = caches;
             this.expiryCache = expiryCache;
         }

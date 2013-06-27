@@ -4,21 +4,18 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
-import org.apache.log4j.Logger;
-
+import net.rubyeye.xmemcached.GetsResponse;
 import net.rubyeye.xmemcached.MemcachedClient;
-import net.rubyeye.xmemcached.exception.MemcachedException;
 
-import cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache;
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
+import cn.gd.gz.treemanz.toolbox.cache.memcached.XmemcachedCache;
+import cn.gd.gz.treemanz.toolbox.cache.vo.DefaultValueCASOperation;
 
 /**
  * @author Treeman
  */
-public class XmemcachedCacheImpl implements MemcachedCache {
-
-    private static Logger logger = Logger.getLogger(XmemcachedCacheImpl.class);
+public class XmemcachedCacheImpl implements XmemcachedCache {
 
     private MemcachedClient memcachedClient = null;
 
@@ -29,7 +26,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
     public void setMemcachedClient(MemcachedClient memcachedClient) {
         this.memcachedClient = memcachedClient;
     }
-    
+
     public void setCache(MemcachedClient cache) {
         this.memcachedClient = cache;
     }
@@ -38,17 +35,12 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * (non-Javadoc)
      * @see cn.gd.gz.treemanz.toolbox.cache.Cache#get(java.lang.Object)
      */
-    public Object get(String key) {
+    public Object get(String key) throws CacheException {
         try {
             return memcachedClient.get(key);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (MemcachedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
-        return null;
     }
 
     /*
@@ -56,7 +48,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * @see cn.gd.gz.treemanz.toolbox.cache.Cache#set(java.lang.Object,
      * java.lang.Object)
      */
-    public void set(String key, Object value) {
+    public void set(String key, Object value) throws CacheException {
         this.set(key, value, -1L);
     }
 
@@ -65,24 +57,14 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * @see cn.gd.gz.treemanz.toolbox.cache.Cache#set(java.lang.Object,
      * java.lang.Object, long)
      */
-    public void set(String key, Object value, long ttl) {
+    public void set(String key, Object value, long ttl) throws CacheException {
         if (0 > ttl) {
             ttl = 0;
         }
         try {
             memcachedClient.set(key, (int) ttl, value);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-            logger.error("set not success", e);
-            throw new RuntimeException("set not success", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.error("set not success", e);
-            throw new RuntimeException("set not success", e);
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-            logger.error("set not success", e);
-            throw new RuntimeException("set not success", e);
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
     }
 
@@ -90,17 +72,12 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * (non-Javadoc)
      * @see cn.gd.gz.treemanz.toolbox.cache.Cache#delete(java.lang.Object)
      */
-    public boolean delete(String key) {
+    public boolean delete(String key) throws CacheException {
         try {
             return memcachedClient.delete(key);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (MemcachedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
-        return false;
     }
 
     /*
@@ -109,17 +86,12 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#getMulti(java
      * .lang.String[])
      */
-    public Map<String, Object> getMulti(String[] keys) {
+    public Map<String, Object> getMulti(String[] keys) throws CacheException {
         try {
             return memcachedClient.get(Arrays.asList(keys));
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (MemcachedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
-        return null;
     }
 
     /*
@@ -128,7 +100,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#getMultiArray
      * (java.lang.String[])
      */
-    public Object[] getMultiArray(String[] keys) {
+    public Object[] getMultiArray(String[] keys) throws CacheException {
         Map<String, Object> map = this.getMulti(keys);
         if (null != map) {
             return map.values().toArray();
@@ -142,9 +114,8 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#getMultiArray
      * (java.lang.String[], java.lang.Integer[])
      */
-    public Object[] getMultiArray(String[] keys, Integer[] hashCodes) {
-        if (null == keys || null == hashCodes
-                || keys.length != hashCodes.length) {
+    public Object[] getMultiArray(String[] keys, Integer[] hashCodes) throws CacheException {
+        if (null == keys || null == hashCodes || keys.length != hashCodes.length) {
             throw new InvalidParameterException();
         }
         String[] newKeys = new String[keys.length];
@@ -160,18 +131,13 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#storeCounter(
      * java.lang.String, long)
      */
-    public boolean storeCounter(String key, long counter) {
+    public boolean storeCounter(String key, long counter) throws CacheException {
         try {
             memcachedClient.getCounter(key, counter).get();
             return true;
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
-        return false;
     }
 
     /*
@@ -180,17 +146,12 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#getCounter(java
      * .lang.String)
      */
-    public long getCounter(String key) {
+    public long getCounter(String key) throws CacheException {
         try {
             return memcachedClient.getCounter(key).get();
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
-        return -1;
     }
 
     /*
@@ -199,7 +160,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#incr(java.lang
      * .String)
      */
-    public long incr(String key) {
+    public long incr(String key) throws CacheException {
         return this.incr(key, 1);
     }
 
@@ -209,21 +170,11 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#incr(java.lang
      * .String, long)
      */
-    public long incr(String key, long inc) {
+    public long incr(String key, long inc) throws CacheException {
         try {
             return memcachedClient.incr(key, inc);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-            logger.error("incr not success", e);
-            throw new RuntimeException("incr not success", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.error("incr not success", e);
-            throw new RuntimeException("incr not success", e);
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-            logger.error("incr not success", e);
-            throw new RuntimeException("incr not success", e);
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
     }
 
@@ -233,7 +184,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#decr(java.lang
      * .String)
      */
-    public long decr(String key) {
+    public long decr(String key) throws CacheException {
         return this.decr(key, -1);
     }
 
@@ -243,21 +194,11 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#decr(java.lang
      * .String, long)
      */
-    public long decr(String key, long dec) {
+    public long decr(String key, long dec) throws CacheException {
         try {
             return memcachedClient.decr(key, dec);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-            logger.error("decr not success", e);
-            throw new RuntimeException("decr not success", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.error("decr not success", e);
-            throw new RuntimeException("decr not success", e);
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-            logger.error("decr not success", e);
-            throw new RuntimeException("decr not success", e);
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
     }
 
@@ -267,7 +208,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#addOrIncr(java
      * .lang.String)
      */
-    public long addOrIncr(String key) {
+    public long addOrIncr(String key) throws CacheException {
         return this.incr(key);
     }
 
@@ -277,21 +218,11 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#addOrIncr(java
      * .lang.String, long)
      */
-    public long addOrIncr(String key, long inc) {
+    public long addOrIncr(String key, long inc) throws CacheException {
         try {
             return memcachedClient.getCounter(key).addAndGet(inc);
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-            logger.error("addOrIncr not success", e);
-            throw new RuntimeException("addOrIncr not success", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.error("addOrIncr not success", e);
-            throw new RuntimeException("addOrIncr not success", e);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-            logger.error("addOrIncr not success", e);
-            throw new RuntimeException("addOrIncr not success", e);
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
     }
 
@@ -301,7 +232,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#addOrDecr(java
      * .lang.String)
      */
-    public long addOrDecr(String key) {
+    public long addOrDecr(String key) throws CacheException {
         return this.decr(key);
     }
 
@@ -311,21 +242,11 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#addOrDecr(java
      * .lang.String, long)
      */
-    public long addOrDecr(String key, long dec) {
+    public long addOrDecr(String key, long dec) throws CacheException {
         try {
             return memcachedClient.getCounter(key).addAndGet(dec);
-        } catch (MemcachedException e) {
-            e.printStackTrace();
-            logger.error("addOrDecr not success", e);
-            throw new RuntimeException("addOrDecr not success", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.error("addOrDecr not success", e);
-            throw new RuntimeException("addOrDecr not success", e);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-            logger.error("addOrDecr not success", e);
-            throw new RuntimeException("addOrDecr not success", e);
+        } catch (Exception e) {
+            throw new CacheException(e);
         }
     }
 
@@ -335,7 +256,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#set(java.lang
      * .String, java.lang.Object, int)
      */
-    public void set(String key, Object value, int hashCode) {
+    public void set(String key, Object value, int hashCode) throws CacheException {
         this.set(key + hashCode, value);
     }
 
@@ -345,7 +266,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#set(java.lang
      * .String, java.lang.Object, int, long)
      */
-    public void set(String key, Object value, int hashCode, long ttl) {
+    public void set(String key, Object value, int hashCode, long ttl) throws CacheException {
         this.set(key + hashCode, value, ttl);
     }
 
@@ -355,7 +276,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#get(java.lang
      * .String, int)
      */
-    public Object get(String key, int hashCode) {
+    public Object get(String key, int hashCode) throws CacheException {
         return this.get(key + hashCode);
     }
 
@@ -365,7 +286,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#delete(java.lang
      * .String, int)
      */
-    public boolean delete(String key, int hashCode) {
+    public boolean delete(String key, int hashCode) throws CacheException {
         return this.delete(key + hashCode);
     }
 
@@ -375,7 +296,7 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#containsKey(java
      * .lang.String)
      */
-    public boolean containsKey(String key) {
+    public boolean containsKey(String key) throws CacheException {
         return this.get(key) != null;
     }
 
@@ -383,8 +304,26 @@ public class XmemcachedCacheImpl implements MemcachedCache {
      * (non-Javadoc)
      * @see cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache#keySet()
      */
-    public Set<String> keySet() {
+    public Set<String> keySet() throws CacheException {
         throw new UnsupportedOperationException();
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * cn.gd.gz.treemanz.toolbox.cache.memcached.XmemcachedCache#cas(java.lang
+     * .String, int, cn.gd.gz.treemanz.toolbox.cache.vo.DefaultValueCASOperation)
+     */
+    public <T> boolean cas(String key, int exp, DefaultValueCASOperation<T> operation) throws CacheException {
+        try {
+            GetsResponse<T> getsResponse = memcachedClient.gets(key);
+            if (null == getsResponse) {
+                memcachedClient.add(key, exp, operation.getDefaultValue());
+            }
+            return memcachedClient.cas(key, exp, operation);
+        } catch (Exception e) {
+            throw new CacheException(e);
+        }
     }
 
 }

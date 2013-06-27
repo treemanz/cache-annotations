@@ -18,17 +18,18 @@ import cn.gd.gz.treemanz.toolbox.cache.annotation.CacheKey;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.CacheObject;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.CacheOut;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.Caching;
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
 
 public class CachingInterceptor implements MethodInterceptor {
-    
+
     public void init() {
         
     }
-    
-    public void shutdown() {
-        
-    }
 
+    public void shutdown() {
+
+    }
+    
     private static final Logger logger = Logger.getLogger(CachingInterceptor.class);
 
     protected long DEFAULT_TTL = -1;
@@ -59,7 +60,7 @@ public class CachingInterceptor implements MethodInterceptor {
     }
 
     protected void refreshCacheVersion(String keyPrefix, KeyTuple keyTuple) {
-        //System.out.println("****keyPrefix="+keyPrefix+",keyTuple=<"+keyTuple.getMasterKey()+","+keyTuple.getNormalKey()+">");
+        // System.out.println("****keyPrefix="+keyPrefix+",keyTuple=<"+keyTuple.getMasterKey()+","+keyTuple.getNormalKey()+">");
         if (keyTuple.getMasterKey().equals("NoParam")) {
             setToCache("VER_" + keyPrefix, String.valueOf(System.currentTimeMillis()), -1);
         }
@@ -79,31 +80,45 @@ public class CachingInterceptor implements MethodInterceptor {
             version0, version1
         };
     }
-    
+
     protected String getSafeKey(String key) {
-        if (key.contains("@")) {
-            key = key.replaceAll("@", "_at_");
-        }
+        // if (key.contains("@")) {
+        // key = key.replaceAll("@", "_at_");
+        // }
         return key;
     }
 
     protected void setToCache(String key, Object value, long ttl) {
-        key = getSafeKey(key);
-        if (ttl > 0) {
-            cache.set(key, value, ttl);
-        } else {
-            cache.set(key, value);
+        try {
+            key = getSafeKey(key);
+            if (ttl > 0) {
+                cache.set(key, value, ttl);
+            } else {
+                cache.set(key, value);
+            }
+        } catch (CacheException e) {
+            logger.error("set to cache error,ex=" + e.getMessage(), e);
         }
     }
-    
+
     protected Object getFromCache(String key) {
-        key = getSafeKey(key);
-        return cache.get(key);
+        try {
+            key = getSafeKey(key);
+            return cache.get(key);
+        } catch (CacheException e) {
+            logger.error("get from cache error,ex=" + e.getMessage(), e);
+            return null;
+        }
     }
 
     protected boolean deleteFromCache(String key) {
-        key = getSafeKey(key);
-        return cache.delete(key);
+        try {
+            key = getSafeKey(key);
+            return cache.delete(key);
+        } catch (CacheException e) {
+            logger.error("delete from cache error,ex=" + e.getMessage(), e);
+            return false;
+        }
     }
 
     public Object invoke(MethodInvocation invocation) throws Throwable {
@@ -167,6 +182,11 @@ public class CachingInterceptor implements MethodInterceptor {
         long ttl = getTtl(caching, tarClass);
 
         String cacheKey = getCacheKey(keyPrefix, keyTuple);
+
+        // System.out.println("========get========");
+        // System.out.println("keyPrefix="+ keyPrefix+",keyTuple=" +
+        // keyTuple.getMasterKey() + ":" + keyTuple.getNormalKey());
+        // System.out.println("===================");
 
         Object _target = getFromCache(cacheKey);
         if (null != _target) {
@@ -344,6 +364,11 @@ public class CachingInterceptor implements MethodInterceptor {
         // }
 
         refreshCacheVersion(keyPrefix, keyTuple);
+
+        // System.out.println("========deleteParam========");
+        // System.out.println("keyPrefix="+ keyPrefix+",keyTuple=" +
+        // keyTuple.getMasterKey() + ":" + keyTuple.getNormalKey());
+        // System.out.println("===========================");
 
         return invocation.proceed();
     }
@@ -596,32 +621,40 @@ public class CachingInterceptor implements MethodInterceptor {
             int normalKeyCnt = 0;
             for (int i = 0; i < args.length; i++) {
                 for (Annotation parameterAnnotation: parametersAnnotations[i]) {
-                    Class<?> clazz = args[i].getClass();
                     if (parameterAnnotation.annotationType().equals(CacheKey.class)) {
                         CacheKey cacheKeyAnnotation = (CacheKey) parameterAnnotation;
-                        if (!clazz.isAnnotationPresent(CacheObject.class)
-                                && (clazz.equals(Integer.class) || clazz.equals(Long.class) || clazz
-                                        .equals(String.class))) {
+                        if (null == args[i]) {
                             if (cacheKeyAnnotation.master()) {
-                                masterKeySB.append(null != args[i] ? args[i].toString() : "null").append("_");
+                                masterKeySB.append("null").append("_");
                                 masterKeyCnt++;
                             } else {
-                                normalKeySB.append(null != args[i] ? args[i].toString() : "null").append("_");
+                                normalKeySB.append("null").append("_");
                                 normalKeyCnt++;
                             }
-                        } else if (clazz.isAnnotationPresent(CacheObject.class)) {
-                            for (Field field: args[i].getClass().getDeclaredFields()) {
-                                if (field.isAnnotationPresent(CacheKey.class)) {
-                                    if (cacheKeyAnnotation.master()) {
-                                        masterKeySB.append(
-                                                null != args[i] ? BeanUtils.getProperty(args[i], field.getName())
-                                                        : "null").append("_");
-                                        masterKeyCnt++;
-                                    } else {
-                                        normalKeySB.append(
-                                                null != args[i] ? BeanUtils.getProperty(args[i], field.getName())
-                                                        : "null").append("_");
-                                        normalKeyCnt++;
+                        } else {
+                            Class<?> clazz = args[i].getClass();
+                            if (!clazz.isAnnotationPresent(CacheObject.class)
+                                    && (clazz.equals(Integer.class) || clazz.equals(Long.class) || clazz
+                                            .equals(String.class))) {
+                                if (cacheKeyAnnotation.master()) {
+                                    masterKeySB.append(args[i].toString()).append("_");
+                                    masterKeyCnt++;
+                                } else {
+                                    normalKeySB.append(args[i].toString()).append("_");
+                                    normalKeyCnt++;
+                                }
+                            } else if (clazz.isAnnotationPresent(CacheObject.class)) {
+                                for (Field field: args[i].getClass().getDeclaredFields()) {
+                                    if (field.isAnnotationPresent(CacheKey.class)) {
+                                        if (cacheKeyAnnotation.master()) {
+                                            masterKeySB.append(BeanUtils.getProperty(args[i], field.getName())).append(
+                                                    "_");
+                                            masterKeyCnt++;
+                                        } else {
+                                            normalKeySB.append(BeanUtils.getProperty(args[i], field.getName())).append(
+                                                    "_");
+                                            normalKeyCnt++;
+                                        }
                                     }
                                 }
                             }

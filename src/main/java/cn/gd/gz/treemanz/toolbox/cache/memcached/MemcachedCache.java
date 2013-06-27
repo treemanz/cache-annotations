@@ -4,44 +4,46 @@ import java.util.Map;
 import java.util.Set;
 
 import cn.gd.gz.treemanz.toolbox.cache.Cache;
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
 
 public interface MemcachedCache extends Cache<String, Object> {
 
-	public Map<String, Object> getMulti(String[] keys);
+    public Map<String, Object> getMulti(String[] keys) throws CacheException;
 
-	public Object[] getMultiArray(String[] keys);
+    public Object[] getMultiArray(String[] keys) throws CacheException;
 
-	public Object[] getMultiArray(String[] keys, Integer[] hashCodes);
+    public Object[] getMultiArray(String[] keys, Integer[] hashCodes) throws CacheException;
 
-	public boolean storeCounter(String key, long counter);
+    public boolean storeCounter(String key, long counter) throws CacheException;
 
-	public long getCounter(String key);
+    public long getCounter(String key) throws CacheException;
 
-	public long incr(String key);
+    public long incr(String key) throws CacheException;
 
-	public long incr(String key, long inc);
+    public long incr(String key, long inc) throws CacheException;
 
-	public long decr(String key);
+    public long decr(String key) throws CacheException;
 
-	public long decr(String key, long dec);
+    public long decr(String key, long dec) throws CacheException;
 
-	public long addOrIncr(String key);
+    public long addOrIncr(String key) throws CacheException;
 
-	public long addOrIncr(String key, long inc);
+    public long addOrIncr(String key, long inc) throws CacheException;
 
-	public long addOrDecr(String key);
+    public long addOrDecr(String key) throws CacheException;
 
-	public long addOrDecr(String key, long dec);
+    public long addOrDecr(String key, long dec) throws CacheException;
 
-	public void set(String key, Object value, int hashCode);
+    public void set(String key, Object value, int hashCode) throws CacheException;
 
-	public void set(String key, Object value, int hashCode, long ttl);
+    public void set(String key, Object value, int hashCode, long ttl) throws CacheException;
 
-	public Object get(String key, int hashCode);
+    public Object get(String key, int hashCode) throws CacheException;
 
-	public boolean delete(String key, int hashCode);
+    public boolean delete(String key, int hashCode) throws CacheException;
 
-	public boolean containsKey(String key);
+    public boolean containsKey(String key) throws CacheException;
 
-	public Set<String> keySet();
+    public Set<String> keySet() throws CacheException;
+
 }

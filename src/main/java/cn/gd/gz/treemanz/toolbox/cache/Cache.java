@@ -1,5 +1,7 @@
 package cn.gd.gz.treemanz.toolbox.cache;
 
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
+
 /**
  * generic cache interface
  *
@@ -15,7 +17,7 @@ public interface Cache<K, V> {
      * @param key
      * @return
      */
-    public V get(K key);
+    public V get(K key) throws CacheException;
 
     /**
      * set into cache
@@ -23,7 +25,7 @@ public interface Cache<K, V> {
      * @param key
      * @param value
      */
-    public void set(K key, V value);
+    public void set(K key, V value) throws CacheException;
 
     /**
      * set into cache
@@ -33,7 +35,7 @@ public interface Cache<K, V> {
      * @param ttl
      *            : time to live
      */
-    public void set(K key, V value, long ttl);
+    public void set(K key, V value, long ttl) throws CacheException;
 
     /**
      * delete from cache
@@ -41,6 +43,6 @@ public interface Cache<K, V> {
      * @param key
      * @return
      */
-    public boolean delete(K key);
+    public boolean delete(K key) throws CacheException;
 
 }

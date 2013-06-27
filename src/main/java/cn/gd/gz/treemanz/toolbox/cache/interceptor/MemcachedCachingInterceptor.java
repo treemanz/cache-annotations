@@ -21,10 +21,11 @@ import cn.gd.gz.treemanz.toolbox.cache.TwoTuple;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.CacheAidMethod;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.CacheKey;
 import cn.gd.gz.treemanz.toolbox.cache.annotation.Caching;
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
 import cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache;
 
 /**
- * @author Lzj
+ * @author Treeman
  */
 public class MemcachedCachingInterceptor extends CachingInterceptor {
 
@@ -64,10 +65,15 @@ public class MemcachedCachingInterceptor extends CachingInterceptor {
     }
 
     protected Map<String, Object> getMultiFromCache(String[] keys) {
-        for (int i = 0; i < keys.length; i++) {
-            keys[i] = getSafeKey(keys[i]);
+        try {
+            for (int i = 0; i < keys.length; i++) {
+                keys[i] = getSafeKey(keys[i]);
+            }
+            return getMemcachedCache().getMulti(keys);
+        } catch (CacheException e) {
+            logger.error("getMulti from cache error,ex=" + e.getMessage(), e);
+            return null;
         }
-        return getMemcachedCache().getMulti(keys);
     }
 
     protected TwoTuple<String, Map<String, String>> getCacheVersions(

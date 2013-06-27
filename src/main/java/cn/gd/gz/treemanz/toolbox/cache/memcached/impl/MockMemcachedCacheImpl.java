@@ -5,38 +5,39 @@ import java.util.Map;
 import java.util.Set;
 
 import cn.gd.gz.treemanz.toolbox.cache.Cache;
+import cn.gd.gz.treemanz.toolbox.cache.exception.CacheException;
 import cn.gd.gz.treemanz.toolbox.cache.memcached.MemcachedCache;
 
 // 去掉了对MemcachedCacheImpl的继承关系
 public class MockMemcachedCacheImpl implements MemcachedCache {
 
-    private Cache<String, Object> localCache;
+    protected Cache<String, Object> localCache;
 
     public void setLocalCache(Cache<String, Object> localCache) {
         this.localCache = localCache;
     }
-    
+
     public void setCache(Cache<String, Object> cache) {
         this.localCache = cache;
     }
 
-    public boolean delete(String key) {
+    public boolean delete(String key) throws CacheException {
         return localCache.delete(key);
     }
 
-    public Object get(String key) {
+    public Object get(String key) throws CacheException {
         return localCache.get(key);
     }
 
-    public void set(String key, Object value, long ttl) {
+    public void set(String key, Object value, long ttl) throws CacheException {
         localCache.set(key, value, ttl);
     }
 
-    public void set(String key, Object value) {
+    public void set(String key, Object value) throws CacheException {
         localCache.set(key, value, -1);
     }
 
-    public long addOrDecr(String key, long dec) {
+    public long addOrDecr(String key, long dec) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value - dec;
@@ -48,7 +49,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public long addOrDecr(String key) {
+    public long addOrDecr(String key) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value - 1;
@@ -60,7 +61,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public long addOrIncr(String key, long inc) {
+    public long addOrIncr(String key, long inc) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value + inc;
@@ -72,7 +73,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public long addOrIncr(String key) {
+    public long addOrIncr(String key) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value + 1;
@@ -84,12 +85,11 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public boolean containsKey(String key) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean containsKey(String key) throws CacheException {
+        return localCache.get(key) != null;
     }
 
-    public long decr(String key, long dec) {
+    public long decr(String key, long dec) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value - dec;
@@ -100,7 +100,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public long decr(String key) {
+    public long decr(String key) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value - 1;
@@ -111,20 +111,20 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public boolean delete(String key, int hashCode) {
+    public boolean delete(String key, int hashCode) throws CacheException {
         return localCache.delete(key);
     }
 
-    public Object get(String key, int hashCode) {
+    public Object get(String key, int hashCode) throws CacheException {
         return localCache.get(key + hashCode);
     }
 
-    public long getCounter(String key) {
+    public long getCounter(String key) throws CacheException {
         Object value = localCache.get(key);
         return null == value ? -1L : (Long) value;
     }
 
-    public Map<String, Object> getMulti(String[] keys) {
+    public Map<String, Object> getMulti(String[] keys) throws CacheException {
         Map<String, Object> map = new HashMap<String, Object>();
         for (String key: keys) {
             map.put(key, localCache.get(key));
@@ -132,7 +132,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return map;
     }
 
-    public Object[] getMultiArray(String[] keys, Integer[] hashCodes) {
+    public Object[] getMultiArray(String[] keys, Integer[] hashCodes) throws CacheException {
         Object[] values = new Object[keys.length];
         for (int i = 0; i < keys.length; i++) {
             values[i] = localCache.get(keys[i] + hashCodes[i]);
@@ -140,7 +140,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return values;
     }
 
-    public Object[] getMultiArray(String[] keys) {
+    public Object[] getMultiArray(String[] keys) throws CacheException {
         Object[] values = new Object[keys.length];
         for (int i = 0; i < keys.length; i++) {
             values[i] = localCache.get(keys[i]);
@@ -148,7 +148,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return values;
     }
 
-    public long incr(String key, long inc) {
+    public long incr(String key, long inc) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value + inc;
@@ -159,7 +159,7 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public long incr(String key) {
+    public long incr(String key) throws CacheException {
         Long value = (Long) localCache.get(key);
         if (null != value) {
             value = value + 1;
@@ -170,20 +170,19 @@ public class MockMemcachedCacheImpl implements MemcachedCache {
         return value;
     }
 
-    public Set<String> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+    public Set<String> keySet() throws CacheException {
+        throw new UnsupportedOperationException();
     }
 
-    public void set(String key, Object value, int hashCode, long ttl) {
+    public void set(String key, Object value, int hashCode, long ttl) throws CacheException {
         localCache.set(key + hashCode, value, ttl);
     }
 
-    public void set(String key, Object value, int hashCode) {
+    public void set(String key, Object value, int hashCode) throws CacheException {
         localCache.set(key + hashCode, value);
     }
 
-    public boolean storeCounter(String key, long counter) {
+    public boolean storeCounter(String key, long counter) throws CacheException {
         localCache.set(key, counter);
         return true;
     }
